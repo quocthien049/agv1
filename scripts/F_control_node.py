@@ -42,20 +42,6 @@ if __name__ == '__main__':
         velPub = rospy.Publisher('/cmd_vel', Twist, queue_size = 10)
 
 
-        # log_sim_params = open(LOG_DIR+'/LogSimParams.txt','w+')
-
-        # # Tham so chay mo phong
-        # test=''
-        # text = 'Simulation parameters: \r\n'
-        # text = text + 'k_rho = %.3f \r\n' % K_RO
-        # text = text + 'k_alpha = %.3f \r\n' % K_ALPHA
-        # text = text + 'k_beta = %.3f \r\n' % K_BETA
-        # text = text + 'v_const = %.3f \r\n' % V_CONST
-        # log_sim_params.write(text)
-
-        # #Dong file
-        # log_sim_params.close()
-
         #print('\r\n' + text)
 
         # check dieu kien on dinh
@@ -92,14 +78,7 @@ if __name__ == '__main__':
                 # stop the robot
                 robotStop(velPub)
 
-                # log trajectory
-                # np.savetxt(LOG_DIR+'/X_traj.csv', X_traj, delimiter = ' , ')
-                # np.savetxt(LOG_DIR+'/Y_traj.csv', Y_traj, delimiter = ' , ')
-                # np.savetxt(LOG_DIR+'/THETA_traj.csv', THETA_traj, delimiter = ' , ')
-                # np.savetxt(LOG_DIR+'/X_goal.csv', X_goal, delimiter = ' , ')
-                # np.savetxt(LOG_DIR+'/Y_goal.csv', Y_goal, delimiter = ' , ')
-                # np.savetxt(LOG_DIR+'/THETA_goal.csv', THETA_goal, delimiter = ' , ')
-
+                
 
                 rospy.signal_shutdown('Goal position reached! End of simulation!')
             #     text = text + '\r\n\r\nGoal position reached! End of simulation!'
