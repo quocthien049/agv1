@@ -6,16 +6,16 @@ from std_msgs.msg import String
 from sensor_msgs.msg import LaserScan
 from Reinforcement import *
 
-MAX_LIDAR_DISTANCE = 1.0
-COLLISION_DISTANCE = 0.14 # LaserScan.range_min = 0.1199999 (m)
+MAX_DISTANCE = 1.0          # LIMIT distance de detect vat
+COLLISION_DISTANCE = 0.16 # LaserScan.range min thuc te la 15 cm
 NEARBY_DISTANCE = 0.45
 
 ZONE_0_LENGTH = 0.4 #0.4 m la trong zone 0 
 ZONE_1_LENGTH = 0.7
 
-ANGLE_MAX = 360 - 1
-ANGLE_MIN = 1 - 1
-HORIZON_WIDTH = 75
+ANGLE_MAX = 359
+ANGLE_MIN = 0
+NGANG_WIDTH = 75    #be rong ngang la 75
 
 
 def lidarScan(msgScan):
@@ -24,13 +24,13 @@ def lidarScan(msgScan):
 
     for i in range(len(msgScan.ranges)):
         angle = degrees(i * msgScan.angle_increment)
-        if ( msgScan.ranges[i] > MAX_LIDAR_DISTANCE ):
-            distance = MAX_LIDAR_DISTANCE
+        if ( msgScan.ranges[i] > MAX_DISTANCE ):
+            distance = MAX_DISTANCE
         elif ( msgScan.ranges[i] < msgScan.range_min ):
             distance = msgScan.range_min
             
             if msgScan.ranges[i] < 0.01:
-                distance = MAX_LIDAR_DISTANCE
+                distance = MAX_DISTANCE
         else:
             distance = msgScan.ranges[i]
 
@@ -48,45 +48,45 @@ def scanDiscretization(state_space, lidar):
     x4 = 3 
 
    
-    lidar_left = min(lidar[(ANGLE_MIN):(ANGLE_MIN + HORIZON_WIDTH)])
+    lidar_left = min(lidar[(ANGLE_MIN):(NGANG_WIDTH)])  #tu goc 0 den goc 75
     if ZONE_1_LENGTH > lidar_left > ZONE_0_LENGTH:
         x1 = 1 
     elif lidar_left <= ZONE_0_LENGTH:
         x1 = 0 
 
-   
-    lidar_right = min(lidar[(ANGLE_MAX - HORIZON_WIDTH):(ANGLE_MAX)])
+    # phia ben right agv
+    lidar_right = min(lidar[(ANGLE_MAX - NGANG_WIDTH):(ANGLE_MAX)]) #
     if ZONE_1_LENGTH > lidar_right > ZONE_0_LENGTH:
         x2 = 1 
     elif lidar_right <= ZONE_0_LENGTH:
         x2 = 0 
 
-   
-    if ( min(lidar[(ANGLE_MAX - HORIZON_WIDTH // 3):(ANGLE_MAX)]) < 1.0 ) or ( min(lidar[(ANGLE_MIN):(ANGLE_MIN + HORIZON_WIDTH // 3)]) < 1.0 ):
+    
+    if ( min(lidar[(ANGLE_MAX - NGANG_WIDTH // 3):(ANGLE_MAX)]) < 1.0 ) or ( min(lidar[(ANGLE_MIN):(ANGLE_MIN + NGANG_WIDTH // 3)]) < 1.0 ):
         object_front = True
     else:
         object_front = False
 
    
-    if min(lidar[(ANGLE_MIN):(ANGLE_MIN + 2 * HORIZON_WIDTH // 3)]) < 1.0:
+    if min(lidar[(ANGLE_MIN):(ANGLE_MIN + 2 * NGANG_WIDTH // 3)]) < 1.0:
         object_left = True
     else:
         object_left = False
 
    
-    if min(lidar[(ANGLE_MAX - 2 * HORIZON_WIDTH // 3):(ANGLE_MAX)]) < 1.0:
+    if min(lidar[(ANGLE_MAX - 2 * NGANG_WIDTH // 3):(ANGLE_MAX)]) < 1.0:
         object_right = True
     else:
         object_right = False
 
    
-    if min(lidar[(ANGLE_MIN + HORIZON_WIDTH // 3):(ANGLE_MIN + HORIZON_WIDTH)]) < 1.0:
+    if min(lidar[(ANGLE_MIN + NGANG_WIDTH // 3):(ANGLE_MIN + NGANG_WIDTH)]) < 1.0:
         object_far_left = True
     else:
         object_far_left = False
 
     
-    if min(lidar[(ANGLE_MAX - HORIZON_WIDTH):(ANGLE_MAX - HORIZON_WIDTH // 3)]) < 1.0:
+    if min(lidar[(ANGLE_MAX - NGANG_WIDTH):(ANGLE_MAX - NGANG_WIDTH // 3)]) < 1.0:
         object_far_right = True
     else:
         object_far_right = False
@@ -106,7 +106,7 @@ def scanDiscretization(state_space, lidar):
     elif object_front and object_right and object_far_right:
         x4 = 2  
 
-    # Tim index trong space
+    # Tim index trong space_ state 
     ss = np.where(np.all(state_space == np.array([x1,x2,x3,x4]), axis = 1))
     state_ind = int(ss[0])
 
@@ -114,7 +114,7 @@ def scanDiscretization(state_space, lidar):
 
 
 def checkCrash(lidar):
-    lidar_horizon = np.concatenate((lidar[(ANGLE_MIN + HORIZON_WIDTH):(ANGLE_MIN):-1],lidar[(ANGLE_MAX):(ANGLE_MAX - HORIZON_WIDTH):-1]))
+    lidar_horizon = np.concatenate((lidar[(ANGLE_MIN + NGANG_WIDTH):(ANGLE_MIN):-1],lidar[(ANGLE_MAX):(ANGLE_MAX - NGANG_WIDTH):-1]))
     W = np.linspace(1.2, 1, len(lidar_horizon) // 2)
     W = np.append(W, np.linspace(1, 1.2, len(lidar_horizon) // 2))
     if np.min( W * lidar_horizon ) < COLLISION_DISTANCE:
@@ -123,7 +123,7 @@ def checkCrash(lidar):
         return False
 
 def checkObjectNearby(lidar):
-    lidar_horizon = np.concatenate((lidar[(ANGLE_MIN + HORIZON_WIDTH):(ANGLE_MIN):-1],lidar[(ANGLE_MAX):(ANGLE_MAX - HORIZON_WIDTH):-1]))
+    lidar_horizon = np.concatenate((lidar[(ANGLE_MIN + NGANG_WIDTH):(ANGLE_MIN):-1],lidar[(ANGLE_MAX):(ANGLE_MAX - NGANG_WIDTH):-1]))
     W = np.linspace(1.4, 1, len(lidar_horizon) // 2)
     W = np.append(W, np.linspace(1, 1.4, len(lidar_horizon) // 2))
     if np.min( W * lidar_horizon ) < NEARBY_DISTANCE:
@@ -134,7 +134,7 @@ def checkObjectNearby(lidar):
 def checkGoalNear(x, y, x_goal, y_goal):
     ro = sqrt( pow( ( x_goal - x ) , 2 ) + pow( ( y_goal - y ) , 2) )
     # return ro
-    if ro < 0.3:
+    if ro < 0.1:
         return True
     else:
         return False
@@ -150,7 +150,11 @@ if __name__ == '__main__':
             ( lidar, angles ) = lidarScan(msgScan)
             ( state_ind, x1, x2 ,x3 ,x4 ) = scanDiscretization(state_space, lidar)
             print(x1,x2,x3,x4)
-            
+            crash = checkCrash(msgScan)
+            if crash: 
+                print(" Detect object ")
+            else: 
+                print(" KHong co vat can ")
     except rospy.ROSInterruptException:
         print('Terminated!')
         pass
