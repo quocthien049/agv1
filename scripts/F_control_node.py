@@ -7,9 +7,9 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 
 import sys
-DATA_PATH = '/home/quat/catkin_ws/src/agv/Data'
-MODULES_PATH = '/home/quat/catkin_ws/src/agv/scripts'
-sys.path.insert(0, MODULES_PATH)
+# DATA_PATH = '/home/quat/catkin_ws/src/agv/Data'
+# MODULES_PATH = '/home/quat/catkin_ws/src/agv/scripts'
+#sys.path.insert(0, MODULES_PATH)
 
 from Control1 import *
 
@@ -29,33 +29,34 @@ Y_goal = np.array([])
 THETA_goal = np.array([])
 
 # FIle dircetory
-LOG_DIR = DATA_PATH + '/Log_feedback_1'
+#LOG_DIR = DATA_PATH + '/Log_feedback_1'
 
 if __name__ == '__main__':
     try:
         # init nodes
-        rospy.init_node('feedback_control_node', anonymous = False)
+        rospy.init_node('F_control_node', anonymous = False)
         rate = rospy.Rate(10)
 
         # Khoi tao rostopic 
-        setPosPub = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size = 10)
+        #setPosPub = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size = 10)
         velPub = rospy.Publisher('/cmd_vel', Twist, queue_size = 10)
 
 
-        log_sim_params = open(LOG_DIR+'/LogSimParams.txt','w+')
+        # log_sim_params = open(LOG_DIR+'/LogSimParams.txt','w+')
 
-        # Tham so chay mo phong
-        text = 'Simulation parameters: \r\n'
-        text = text + 'k_rho = %.3f \r\n' % K_RO
-        text = text + 'k_alpha = %.3f \r\n' % K_ALPHA
-        text = text + 'k_beta = %.3f \r\n' % K_BETA
-        text = text + 'v_const = %.3f \r\n' % V_CONST
-        log_sim_params.write(text)
+        # # Tham so chay mo phong
+        # test=''
+        # text = 'Simulation parameters: \r\n'
+        # text = text + 'k_rho = %.3f \r\n' % K_RO
+        # text = text + 'k_alpha = %.3f \r\n' % K_ALPHA
+        # text = text + 'k_beta = %.3f \r\n' % K_BETA
+        # text = text + 'v_const = %.3f \r\n' % V_CONST
+        # log_sim_params.write(text)
 
-        #Dong file
-        log_sim_params.close()
+        # #Dong file
+        # log_sim_params.close()
 
-        print('\r\n' + text)
+        #print('\r\n' + text)
 
         # check dieu kien on dinh
         stab_dict = { True : 'Satisfied!', False : 'Not Satisfied!'}
@@ -70,12 +71,12 @@ if __name__ == '__main__':
         while not rospy.is_shutdown():
 
             # Cho doi odomMsg
-            odomMsg = rospy.wait_for_message('/odom', Odometry)
+            odomMsg = rospy.wait_for_message('/mcu_pose', Odometry)
 
             # Nhan vi tri va huong
             ( x , y ) = getPosition(odomMsg)
             theta = getRotation(odomMsg)
-
+            print( x, y, theta)
             # 	
             X_traj = np.append(X_traj, x)
             Y_traj = np.append(Y_traj, y)
@@ -86,28 +87,24 @@ if __name__ == '__main__':
 
             status = robotFeedbackControl(velPub, x, y, theta, X_GOAL, Y_GOAL, radians(THETA_GOAL))
 
-            text = '\r\n'
-            text = text + '\r\nx :       %.2f -> %.2f [m]' % (x, X_GOAL)
-            text = text + '\r\ny :       %.2f -> %.2f [m]' % (y, Y_GOAL)
-            text = text + '\r\ntheta :   %.2f -> %.2f [degrees]' % (degrees(theta), THETA_GOAL)
-
+           
             if status == 'Goal position reached!':
                 # stop the robot
                 robotStop(velPub)
 
                 # log trajectory
-                np.savetxt(LOG_DIR+'/X_traj.csv', X_traj, delimiter = ' , ')
-                np.savetxt(LOG_DIR+'/Y_traj.csv', Y_traj, delimiter = ' , ')
-                np.savetxt(LOG_DIR+'/THETA_traj.csv', THETA_traj, delimiter = ' , ')
-                np.savetxt(LOG_DIR+'/X_goal.csv', X_goal, delimiter = ' , ')
-                np.savetxt(LOG_DIR+'/Y_goal.csv', Y_goal, delimiter = ' , ')
-                np.savetxt(LOG_DIR+'/THETA_goal.csv', THETA_goal, delimiter = ' , ')
+                # np.savetxt(LOG_DIR+'/X_traj.csv', X_traj, delimiter = ' , ')
+                # np.savetxt(LOG_DIR+'/Y_traj.csv', Y_traj, delimiter = ' , ')
+                # np.savetxt(LOG_DIR+'/THETA_traj.csv', THETA_traj, delimiter = ' , ')
+                # np.savetxt(LOG_DIR+'/X_goal.csv', X_goal, delimiter = ' , ')
+                # np.savetxt(LOG_DIR+'/Y_goal.csv', Y_goal, delimiter = ' , ')
+                # np.savetxt(LOG_DIR+'/THETA_goal.csv', THETA_goal, delimiter = ' , ')
 
 
                 rospy.signal_shutdown('Goal position reached! End of simulation!')
-                text = text + '\r\n\r\nGoal position reached! End of simulation!'
+            #     text = text + '\r\n\r\nGoal position reached! End of simulation!'
 
-            print(text)
+            # print(text)
 
     except rospy.ROSInterruptException:
         robotStop(velPub)
