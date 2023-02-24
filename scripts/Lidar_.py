@@ -6,16 +6,18 @@ from std_msgs.msg import String
 from sensor_msgs.msg import LaserScan
 from Reinforcement import *
 
+REAL_FAKE_COEFFICIENT=2
+
 MAX_DISTANCE = 1.0          # LIMIT distance de detect vat
-COLLISION_DISTANCE = 0.16 # LaserScan.range min thuc te la 15 cm
+COLLISION_DISTANCE = 0.16   # LaserScan.range min thuc te la 15 cm
 NEARBY_DISTANCE = 0.45
 
-ZONE_0_LENGTH = 0.4 #0.4 m la trong zone 0 
+ZONE_0_LENGTH = 0.4         # 0.4 m la trong zone 0 
 ZONE_1_LENGTH = 0.7
 
-ANGLE_MAX = 359
-ANGLE_MIN = 0
-NGANG_WIDTH = 75    #be rong ngang la 75
+ANGLE_MAX = 359 * REAL_FAKE_COEFFICIENT
+ANGLE_MIN = 0 * REAL_FAKE_COEFFICIENT
+NGANG_WIDTH = 75 *REAL_FAKE_COEFFICIENT   # be rong ngang la 75
 
 
 def lidarScan(msgScan):
@@ -149,12 +151,15 @@ if __name__ == '__main__':
             msgScan = rospy.wait_for_message('/scan', LaserScan)
             ( lidar, angles ) = lidarScan(msgScan)
             ( state_ind, x1, x2 ,x3 ,x4 ) = scanDiscretization(state_space, lidar)
-            print(x1,x2,x3,x4)
-            crash = checkCrash(msgScan)
-            if crash: 
-                print(" Detect object ")
-            else: 
-                print(" KHong co vat can ")
+            #print(x1,x2,x3,x4)
+            #print(len(lidar),len(angles)) 720 720 phan tu
+            print(angles[0],angles[1],angles[2], angles[719]) #goc tu 0 0.5 1
+            print(lidar[0],lidar[1],lidar[2],lidar[359])
+            # crash = checkCrash(msgScan)
+            # if crash: 
+            #     print(" Detect object ")
+            # else: 
+            #     print(" KHong co vat can ")
     except rospy.ROSInterruptException:
         print('Terminated!')
         pass
