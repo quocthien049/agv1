@@ -4,11 +4,10 @@ import rospy
 from time import time
 from time import sleep
 from datetime import datetime
-import matplotlib.pyplot as plt
 
 import sys
-DATA_PATH = '/home/quat/catkin_ws/src/agv/Data'
-MODULES_PATH = '/home/quat/catkin_ws/src/agv/scripts'
+DATA_PATH = '/home/doan/catkin_ws/src/agv_real/src/agv1/Data'
+MODULES_PATH = '/home/doan/catkin_ws/src/agv_real/src/agv1/scripts'
 sys.path.insert(0, MODULES_PATH)
 
 from Reinforcement import *
@@ -49,7 +48,7 @@ if __name__ == '__main__':
         rospy.init_node('control_node', anonymous = False)
         rate = rospy.Rate(10)
 
-        setPosPub = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size = 10)
+        #setPosPub = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size = 10)
         velPub = rospy.Publisher('/cmd_vel', Twist, queue_size = 10) #node thuc te
 
         actions = createActions()
@@ -75,7 +74,7 @@ if __name__ == '__main__':
         # main loop
         while not rospy.is_shutdown():
             msgScan = rospy.wait_for_message('/scan', LaserScan)
-            odomMsg = rospy.wait_for_message('/odom', Odometry)
+            odomMsg = rospy.wait_for_message('/mcu_pose', mcu_pose)
 
             # thoi gian toi thieu giua 2 hanh dong
             step_time = (rospy.Time.now() - t_step).to_sec()

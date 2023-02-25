@@ -4,14 +4,14 @@ import rospy
 from time import time
 from std_msgs.msg import String
 from geometry_msgs.msg import Twist
-from nav_msgs.msg import Odometry
-from gazebo_msgs.msg import ModelState
+from agv.msg import mcu_pose
+#from gazebo_msgs.msg import ModelState
 from math import *
 import numpy as np
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
 CONST_LINEAR_SPEED_FORWARD = 0.08
-CONST_ANGULAR_SPEED_FORWARD = 0.0
+CONST_ANGULAR_SPEED_FORWARD = 0.0	
 CONST_LINEAR_SPEED_TURN = 0.06
 CONST_ANGULAR_SPEED_TURN = 0.4
 
@@ -140,7 +140,7 @@ if __name__ == '__main__':
         print("Start running ")
         
         while not rospy.is_shutdown():
-            odomMsg = rospy.wait_for_message('/mcu_pose', Odometry)
+            odomMsg = rospy.wait_for_message('/mcu_pose', mcu_pose)
             ( x,y ) = getPosition(odomMsg)
             theta = getRotation ( odomMsg )
             print( x, y,theta )
