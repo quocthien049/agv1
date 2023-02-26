@@ -8,11 +8,11 @@ from agv.msg import mcu_pose
 #from gazebo_msgs.msg import ModelState
 from math import *
 import numpy as np
-from tf.transformations import euler_from_quaternion, quaternion_from_euler
+#from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
-CONST_LINEAR_SPEED_FORWARD = 0.08
+CONST_LINEAR_SPEED_FORWARD = 0.005
 CONST_ANGULAR_SPEED_FORWARD = 0.0	
-CONST_LINEAR_SPEED_TURN = 0.06
+CONST_LINEAR_SPEED_TURN = 0.005
 CONST_ANGULAR_SPEED_TURN = 0.4
 
 
@@ -22,21 +22,21 @@ K_BETA = -3
 V_CONST = 0.1 # [m/s]
 
 # K
-GOAL_DIST_THRESHOLD = 0.1 # [m]
-GOAL_ANGLE_THRESHOLD = 15 # [degrees]
+GOAL_DIST_THRESHOLD = 0.3 # [m]
+`
 
 # Get theta radiann
 def getRotation(odomMsg):
     # orientation_q = odomMsg.pose.pose.orientation
     # orientation_list = [ orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
     # (roll, pitch, yaw) = euler_from_quaternion(orientation_list)
-    yaw=odomMsg.pose.theta
+    yaw=odomMsg.theta*180/pi
     return yaw
 
 # Get vi tri  x y
 def getPosition(odomMsg):
-    x = odomMsg.pose.x
-    y = odomMsg.pose.y
+    x = odomMsg.x
+    y = odomMsg.y
     return ( x , y)
 
 # Get toc do dai
@@ -50,12 +50,12 @@ def getAngVel(odomMsg):
 # Gui den twist
 def createVelMsg(v,w):
     velMsg = Twist()
-    velMsg.linear = v
+    velMsg.linear.x = v
     # velMsg.linear.y = 0
     # velMsg.linear.z = 0
     # velMsg.angular.x = 0
     # velMsg.angular.y = 0
-    velMsg.angular = w
+    velMsg.angular.z = w
     return velMsg
 
 # truoc
@@ -97,7 +97,7 @@ def robotDoAction(velPub, action):
 
 # Thuat toan dieu khien hoi tiep 
 def robotFeedbackControl(velPub, x, y, theta, x_goal, y_goal, theta_goal):
-    # theta goal normalization
+    # FeedbackControl
     if theta_goal >= pi:
         theta_goal_norm = theta_goal - 2 * pi
     else:
@@ -109,7 +109,7 @@ def robotFeedbackControl(velPub, x, y, theta, x_goal, y_goal, theta_goal):
     alpha = (lamda -  theta + pi) % (2 * pi) - pi
     beta = (theta_goal - lamda + pi) % (2 * pi) - pi
 
-    if ro < GOAL_DIST_THRESHOLD and degrees(abs(theta-theta_goal_norm)) < GOAL_ANGLE_THRESHOLD:
+    if ro < GOAL_DIST_THRESHOLD :
         status = 'Goal position reached!'
         v = 0
         w = 0

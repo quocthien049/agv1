@@ -6,7 +6,7 @@ from std_msgs.msg import String
 from sensor_msgs.msg import LaserScan
 from Reinforcement import *
 
-REAL_FAKE_COEFFICIENT=2
+REAL_FAKE_COEFFICIENT = 2
 
 MAX_DISTANCE = 1.0          # LIMIT distance de detect vat
 COLLISION_DISTANCE = 0.16   # LaserScan.range min thuc te la 15 cm
@@ -15,9 +15,9 @@ NEARBY_DISTANCE = 0.45
 ZONE_0_LENGTH = 0.4         # 0.4 m la trong zone 0 
 ZONE_1_LENGTH = 0.7
 
-ANGLE_MAX = 359 * REAL_FAKE_COEFFICIENT
+ANGLE_MAX = 555 
 ANGLE_MIN = 0 * REAL_FAKE_COEFFICIENT
-NGANG_WIDTH = 75 *REAL_FAKE_COEFFICIENT   # be rong ngang la 75
+NGANG_WIDTH = 90  # be rong ngang la 75
 
 
 def lidarScan(msgScan):
@@ -146,16 +146,19 @@ if __name__ == '__main__':
         rospy.init_node('test_lidar',anonymous = False)
         rate = rospy.Rate(10)
         print("Start running ")
+        actions = createActions()
         state_space = createStateSpace()
+        
         while not rospy.is_shutdown():
             msgScan = rospy.wait_for_message('/scan', LaserScan)
             ( lidar, angles ) = lidarScan(msgScan)
             ( state_ind, x1, x2 ,x3 ,x4 ) = scanDiscretization(state_space, lidar)
-            #print(x1,x2,x3,x4)
-            #print(len(lidar),len(angles)) 720 720 phan tu
-            print(angles[0],angles[1],angles[2], angles[719]) #goc tu 0 0.5 1
-            print(lidar[0],lidar[1],lidar[2],lidar[359])
-            # crash = checkCrash(msgScan)
+            print(x1,x2,x3,x4)
+            print(len(lidar),len(angles)) #720 720 phan tu
+            #print(angles[0],angles[1],angles[2], angles[719]) #goc tu 0 0.5 1
+            #print(lidar[0],lidar[1],lidar[2],lidar[359])
+            crash = checkCrash(lidar)
+            #print(crash)
             # if crash: 
             #     print(" Detect object ")
             # else: 

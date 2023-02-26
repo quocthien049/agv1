@@ -4,7 +4,7 @@ import rospy
 from time import time
 from time import sleep
 from datetime import datetime
-import matplotlib.pyplot as plt
+
 
 import sys
 # DATA_PATH = '/home/quat/catkin_ws/src/agv/Data'
@@ -16,9 +16,9 @@ from Control1 import *
 X_INIT = 0.0
 Y_INIT = 0.0
 THETA_INIT = 0.0
-X_GOAL = 3
-Y_GOAL = 2
-THETA_GOAL = 15
+X_GOAL = 1
+Y_GOAL = 0
+THETA_GOAL = 0
 
 # init trajectory
 X_traj = np.array([])
@@ -51,13 +51,13 @@ if __name__ == '__main__':
         print('Strong Stability Condition: ' + stab_dict[check_strong_stability(K_RO, K_ALPHA, K_BETA)])
 
         # because of the video recording
-        sleep(5)
+        sleep(1)
 
         # main loop
         while not rospy.is_shutdown():
 
             # Cho doi odomMsg
-            odomMsg = rospy.wait_for_message('/mcu_pose', Odometry)
+            odomMsg = rospy.wait_for_message('/mcu_pose', mcu_pose)
 
             # Nhan vi tri va huong
             ( x , y ) = getPosition(odomMsg)

@@ -6,8 +6,8 @@ from time import sleep
 from datetime import datetime
 
 import sys
-DATA_PATH = '/home/doan/catkin_ws/src/agv_real/src/agv1/Data'
-MODULES_PATH = '/home/doan/catkin_ws/src/agv_real/src/agv1/scripts'
+DATA_PATH = '/home/le/catkin_ws/src/agv1/Data'
+MODULES_PATH = '/home/le/catkin_ws/src/agv1/scripts'
 sys.path.insert(0, MODULES_PATH)
 
 from Reinforcement import *
@@ -15,7 +15,7 @@ from Lidar_ import *
 from Control1 import *
 
 # Real robot
-REAL_ROBOT = False
+REAL_ROBOT = True
 
 #thoi gian giua 2 hanh dong
 MIN_TIME_BETWEEN_ACTIONS = 0.0
@@ -26,9 +26,9 @@ if REAL_ROBOT:
     X_INIT = 0.0
     Y_INIT = 0.0
     THETA_INIT = 0.0
-    X_GOAL = 1.7
-    Y_GOAL = 1.1
-    THETA_GOAL = 90
+    X_GOAL = 0
+    Y_GOAL = 2
+    THETA_GOAL = 0
 else:
     RANDOM_INIT_POS = False
 
@@ -36,8 +36,8 @@ else:
     Y_INIT = 2
     THETA_INIT = 40
 
-    X_GOAL = 3
-    Y_GOAL = 0
+    X_GOAL = 2
+    Y_GOAL = -0.5
     THETA_GOAL = 0
 
 # sourt Qtable
@@ -67,57 +67,39 @@ if __name__ == '__main__':
         count = 0
 
         # robot o vi tri ban dau
-        robot_in_pos = False
+        robot_in_pos = True
 
         sleep(1)
 
         # main loop
         while not rospy.is_shutdown():
             msgScan = rospy.wait_for_message('/scan', LaserScan)
+            
             odomMsg = rospy.wait_for_message('/mcu_pose', mcu_pose)
-
+            print(robot_in_pos)
             # thoi gian toi thieu giua 2 hanh dong
             step_time = (rospy.Time.now() - t_step).to_sec()
 
             if step_time > MIN_TIME_BETWEEN_ACTIONS:
                 t_step = rospy.Time.now()
 
-                if not robot_in_pos:
+                if robot_in_pos:
                     robotStop(velPub)
                     # init pos
                     if REAL_ROBOT:
                         ( x_init , y_init , theta_init ) = (0, 0, 0)
-                        odomMsg = rospy.wait_for_message('/odom', Odometry)
+                        print(x_init)
+                        odomMsg = rospy.wait_for_message('/mcu_pose', mcu_pose)
                         ( x , y ) = getPosition(odomMsg)
                         theta = degrees(getRotation(odomMsg))
-                        robot_in_pos = True
+                        print(x,y,theta)
+                        robot_in_pos = False
                         print('\r\nInitial position:')
                         print('x = %.2f [m]' % x)
                         print('y = %.2f [m]' % y)
                         print('theta = %.2f [degrees]' % theta)
                         print('')
-                    else:
-                        if RANDOM_INIT_POS:
-                            ( x_init , y_init , theta_init ) = robotSetRandomPos(setPosPub)
-                        else:
-                            ( X_INIT , Y_INIT)= getPosition(odomMsg)
-                            THETA_INIT=getRotation(odomMsg)
-                            ( x_init , y_init , theta_init ) = robotSetPos(setPosPub, X_INIT, Y_INIT, THETA_INIT)
-                        # Kiem tra vi tri ban dau
-                        odomMsg = rospy.wait_for_message('/odom', Odometry)
-                        ( x , y ) = getPosition(odomMsg)
-                        theta = degrees(getRotation(odomMsg))
-                        print(theta, theta_init)
-                        if abs(x-x_init) < 0.05 and abs(y-y_init) < 0.05 and abs(theta-theta_init) < 2:
-                            robot_in_pos = True
-                            print('\r\nInitial position:')
-                            print('x = %.2f [m]' % x)
-                            print('y = %.2f [m]' % y)
-                            print('theta = %.2f [degrees]' % theta)
-                            print('')
-                            sleep(1)
-                        else:
-                            robot_in_pos = False
+                   
                 else:
                     count = count + 1
                     text = '\r\nStep %d , Step time %.2f s' % (count, step_time)
@@ -125,7 +107,8 @@ if __name__ == '__main__':
                     # Get vi tri va huong robot 
                     ( x , y ) = getPosition(odomMsg)
                     theta = getRotation(odomMsg)
-
+                    print(x,y,theta)
+                    print(X_GOAL,Y_GOAL,THETA_GOAL)
                     # Get lidar scan
                     ( lidar, angles ) = lidarScan(msgScan)
                     ( state_ind, x1, x2 ,x3 ,x4 ) = scanDiscretization(state_space, lidar)
@@ -159,9 +142,7 @@ if __name__ == '__main__':
                             print('\r\n', status, '\r\n')
                         text = text + ' ==> Q-learning algorithm'
 
-                    text = text + '\r\nx :       %.2f -> %.2f [m]' % (x, X_GOAL)
-                    text = text + '\r\ny :       %.2f -> %.2f [m]' % (y, Y_GOAL)
-                    text = text + '\r\ntheta :   %.2f -> %.2f [degrees]' % (degrees(theta), THETA_GOAL)
+                    
 
                     if status == 'Goal position reached!':
                         robotStop(velPub)
